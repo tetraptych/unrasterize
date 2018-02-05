@@ -67,7 +67,11 @@ class NaiveUnrasterizer(BaseUnrasterizer):
         self.n_pixels = n_pixels
 
     def select_representative_pixels(self, raster_data):
-        """Select representative pixels for the provided raster dataset."""
+        """
+        Select representative pixels for the provided raster dataset.
+
+        The NaiveUnrasterizer simply chooses the n pixels that have the highest value.
+        """
         # FIXME: Allow for multiple bands.
         band = raster_data.read()[0]
         sorted_pixels = self._sort_pixels(band)
@@ -84,9 +88,12 @@ class NaiveUnrasterizer(BaseUnrasterizer):
         )
 
 
-class CleverUnrasterizer(BaseUnrasterizer):
+class Unrasterizer(BaseUnrasterizer):
     """
     An implementation of the BaseUnrasterizer interface that insists on choosing far away points.
+
+    If a given pixel is too close to another already selected pixel, do not select it.
+    If a given pixel has a value below the Unrasterizer's threshold, do not select it.
 
     Intended to provide broader coverage of the area than the NaiveUnrasterizer.
     """
@@ -103,11 +110,12 @@ class CleverUnrasterizer(BaseUnrasterizer):
         """Select representative pixels for the provided raster dataset."""
         # FIXME: Allow for multiple bands.
         band = raster_data.read()[0]
-        self.mask = np.ones(shape=band.shape, dtype=bool)
+        self.mask = band > self.threshold
         sorted_pixels = self._sort_pixels(band)
 
         for idx, pixel in enumerate(sorted_pixels):
-            self._consider_selecting_pixel(band, pixel, idx)
+            if self.mask[tuple(pixel)]:
+                self._select_next_pixel(band, pixel, idx)
 
         self.selected_values = self._reassign_pixel_values(
             band=band,
@@ -119,44 +127,35 @@ class CleverUnrasterizer(BaseUnrasterizer):
             pixels=self.selected_pixels
         )
 
-    def _consider_selecting_pixel(self, band, pixel, idx):
-        """
-        Consider selecting the provided pixel as a representative point.
+    def _select_next_pixel(self, band, pixel, idx):
+        """Select the provided pixel as a representative point."""
+        self._selected_indexes.append(idx)
+        self.selected_pixels.append(pixel)
 
-        If the pixel is too close to another already selected pixel, do not select it.
-        If the pixel is below the Unrasterizer's threshold, do not select it.
-        """
-        if self.mask[tuple(pixel)] and band[tuple(pixel)] > self.threshold:
-            self._selected_indexes.append(idx)
-            self.selected_pixels.append(pixel)
-
-            min_row, max_row, min_col, max_col = self._get_pixel_window(
-                pixel=pixel,
-                width=self.mask_width,
-                height=self.mask_width,
-                max_row=band.shape[0],
-                max_col=band.shape[1]
+        row_slice, col_slice = self._get_pixel_window(
+            pixel=pixel,
+            width=self.mask_width,
+            height=self.mask_width,
+        )
+        self.mask[row_slice, col_slice] = False
+        # FIXME: Use self.mask_width / 2 for this window to avoid double-counting.
+        window = band[row_slice, col_slice]
+        self._raw_pixel_values.append(
+            np.sum(
+                window[window > 0.0],
+                dtype=np.float32
             )
-            self.mask[min_row:max_row, min_col:max_col] = False
-
-            # FIXME: Use self.mask_width / 2 for this window to avoid double-counting.
-            window = band[min_row:max_row, min_col:max_col]
-            self._raw_pixel_values.append(
-                np.sum(
-                    window[window > 0.0],
-                    dtype=np.float32
-                )
-            )
+        )
 
     @staticmethod
-    def _get_pixel_window(pixel, width, height, max_row, max_col):
+    def _get_pixel_window(pixel, width, height):
         """Return the rows and columns of a rectangle centered at the given pixel."""
         # TODO: Use explicit slices.
         min_row = max(pixel[0] - width, 0)
         min_col = max(pixel[1] - height, 0)
-        max_row = min(pixel[0] + width, max_row)
-        max_col = min(pixel[1] + height, max_col)
-        return min_row, max_row, min_col, max_col
+        max_row = pixel[0] + width
+        max_col = pixel[1] + height
+        return slice(min_row, max_row), slice(min_col, max_col)
 
     @staticmethod
     def manhattan_distance(arr1, arr2):
