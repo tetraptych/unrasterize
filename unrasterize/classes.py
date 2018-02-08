@@ -1,5 +1,10 @@
 """Classes implementing methods to convert raster files to GeoJSON."""
+import itertools
+import math
+
 import numpy as np
+
+import rasterio
 
 
 class BaseUnrasterizer(object):
@@ -38,7 +43,7 @@ class BaseUnrasterizer(object):
             raw_pixel_values = [band[tuple(pixel)] for pixel in pixels]
         # Avoid underflow by ignoring negative values.
         total = np.sum(band[band > 0.0], dtype=np.float32)
-        total_selected = np.sum(raw_pixel_values, dtype=np.uint32)
+        total_selected = np.sum(raw_pixel_values, dtype=np.float32)
         return [
             val * total / total_selected for val in raw_pixel_values
         ]
@@ -99,17 +104,21 @@ class Unrasterizer(BaseUnrasterizer):
     """
 
     def __init__(self, mask_width, threshold=1.0):
-        """Inititalize a CleverUnrasterizer."""
+        """Inititalize an Unrasterizer."""
         super().__init__()
         self.mask_width = mask_width
         self.mask = None
         self.threshold = threshold
         self._raw_pixel_values = []
 
-    def select_representative_pixels(self, raster_data):
+    def select_representative_pixels(self, raster_data, window=None):
         """Select representative pixels for the provided raster dataset."""
         # FIXME: Allow for multiple bands.
-        band = raster_data.read()[0]
+        if not window:
+            window = rasterio.windows.Window(
+                col_off=0, row_off=0, width=raster_data.width, height=raster_data.height
+            )
+        band = raster_data.read(window=window)[0]
         self.mask = band > self.threshold
         sorted_pixels = self._sort_pixels(band)
 
@@ -124,7 +133,15 @@ class Unrasterizer(BaseUnrasterizer):
         )
         self.selected_coords = self._get_coordinates(
             raster_data=raster_data,
-            pixels=self.selected_pixels
+            pixels=self.selected_pixels,
+            col_offset=window.col_off,
+            row_offset=window.row_off
+        )
+
+        return (
+            self.selected_pixels,
+            self.selected_values,
+            self.selected_coords
         )
 
     def _select_next_pixel(self, band, pixel, idx):
@@ -161,3 +178,60 @@ class Unrasterizer(BaseUnrasterizer):
     def manhattan_distance(arr1, arr2):
         """Return the Manhattan (city-block) distance between two [row, column] arrays."""
         return np.sum(np.abs(arr1 - arr2))
+
+
+class WindowedUnrasterizer(BaseUnrasterizer):
+    """."""
+
+    def __init__(self, mask_width, threshold=1.0):
+        """Inititalize a WindowedUnrasterizer."""
+        super().__init__()
+        self.mask_width = mask_width
+        self.mask = None
+        self.threshold = threshold
+        self.selected_pixels = []
+        self.selected_values = []
+        self.selected_coords = []
+
+    def select_representative_pixels(self, raster_data, window_shape=None):
+        """Select representative pixels for the provided raster dataset."""
+        if not window_shape:
+            window_shape = raster_data.block_shapes[0]
+
+        windows = self._get_windows(raster_data, window_shape)
+
+        for window in windows:
+            new_pixels, new_values, new_coordinates = self.select_representative_pixels_in_window(
+                raster_data=raster_data, window=window
+            )
+            self.selected_pixels.extend(new_pixels)
+            self.selected_values.extend(new_values)
+            self.selected_coords.extend(new_coordinates)
+
+        return (
+            self.selected_pixels,
+            self.selected_values,
+            self.selected_coords
+        )
+
+    def _get_windows(self, raster_data, window_shape):
+        n_windows_x = math.ceil(raster_data.width / window_shape[0])
+        n_windows_y = math.ceil(raster_data.height / window_shape[1])
+        windows = []
+        for i, j in itertools.product(range(n_windows_x), range(n_windows_y)):
+            windows.append(
+                rasterio.windows.Window(
+                    col_off=i * window_shape[0],
+                    row_off=j * window_shape[1],
+                    width=window_shape[0],
+                    height=window_shape[1]
+                )
+            )
+        return windows
+
+    def select_representative_pixels_in_window(self, raster_data, window):
+        """Select representative pixels within a single window."""
+        unrasterizer = Unrasterizer(mask_width=self.mask_width, threshold=self.threshold)
+        return unrasterizer.select_representative_pixels(
+            raster_data=raster_data, window=window
+        )
