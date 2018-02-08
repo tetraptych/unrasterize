@@ -4,6 +4,8 @@ import math
 
 import numpy as np
 
+import pathos
+
 import rasterio
 
 
@@ -49,11 +51,12 @@ class BaseUnrasterizer(object):
         ]
 
     @staticmethod
-    def _get_coordinates(raster_data, pixels, row_offset=0, col_offset=0):
+    def _get_coordinates(transform, pixels, row_offset=0, col_offset=0):
         return [
-            raster_data.xy(
-                row=row + row_offset,
-                col=col + col_offset,
+            rasterio.transform.xy(
+                transform=transform,
+                rows=row + row_offset,
+                cols=col + col_offset,
             )
             for row, col in pixels
         ]
@@ -88,7 +91,7 @@ class NaiveUnrasterizer(BaseUnrasterizer):
             pixels=self.selected_pixels
         )
         self.selected_coords = self._get_coordinates(
-            raster_data=raster_data,
+            transform=raster_data.transform,
             pixels=self.selected_pixels
         )
 
@@ -113,20 +116,33 @@ class Unrasterizer(BaseUnrasterizer):
 
     def select_representative_pixels(self, raster_data, window=None):
         """Select representative pixels for the provided raster dataset."""
-        # FIXME: Allow for multiple bands.
         if not window:
             window = rasterio.windows.Window(
                 col_off=0, row_off=0, width=raster_data.width, height=raster_data.height
             )
         band = raster_data.read(window=window)[0]
+        self._select_representative_pixels_from_band(
+            band=band,
+            transform=raster_data.transform,
+            window=window
+        )
+
+    def _select_representative_pixels_from_band(self, band, transform, window=None):
+        """
+        Select representative pixels for the provided raster dataset within a single band.
+
+        Used by the WindowedUnrasterizer to select pixels in parallel.
+        """
+        if not window:
+            window = rasterio.windows.Window(
+                col_off=0, row_off=0, width=band.shape[1], height=band.shape[0]
+            )
         self.mask = band > self.threshold
         sorted_pixels = self._sort_pixels(band)
 
-        [
-            self._select_next_pixel(band, pixel, idx)
-            for idx, pixel in enumerate(sorted_pixels)
-            if self.mask[tuple(pixel)]
-        ]
+        for idx, pixel in enumerate(sorted_pixels):
+            if self.mask[tuple(pixel)]:
+                self._select_next_pixel(band, pixel, idx)
 
         self.selected_values = self._reassign_pixel_values(
             band=band,
@@ -134,7 +150,7 @@ class Unrasterizer(BaseUnrasterizer):
             raw_pixel_values=self._raw_pixel_values
         )
         self.selected_coords = self._get_coordinates(
-            raster_data=raster_data,
+            transform=transform,
             pixels=self.selected_pixels,
             col_offset=window.col_off,
             row_offset=window.row_off
@@ -197,17 +213,27 @@ class WindowedUnrasterizer(BaseUnrasterizer):
         self.mask = None
         self.threshold = threshold
 
-    def select_representative_pixels(self, raster_data, window_shape=None):
+    def select_representative_pixels(self, raster_data, window_shape=None, n_jobs=-1):
         """Select representative pixels for the provided raster dataset."""
         if not window_shape:
             window_shape = raster_data.block_shapes[0]
 
         windows = self._get_windows(raster_data, window_shape)
+        bands = (raster_data.read(window=window)[0] for window in windows)
+        transform = raster_data.transform
 
-        pixel_lists, value_lists, coord_lists = zip(*[
-            self.select_representative_pixels_in_window(raster_data=raster_data, window=window)
-            for window in windows
-        ])
+        if n_jobs < 0:
+            n_jobs = pathos.helpers.cpu_count()
+
+        with pathos.pools.ProcessPool(processes=n_jobs) as executor:
+            results = executor.map(
+                self.select_representative_pixels_in_window,
+                bands,
+                itertools.repeat(transform),
+                windows
+            )
+
+        pixel_lists, value_lists, coord_lists = zip(*results)
 
         self.selected_pixels = [pixel for pixels in pixel_lists for pixel in pixels]
         self.selected_values = [value for values in value_lists for value in values]
@@ -226,9 +252,12 @@ class WindowedUnrasterizer(BaseUnrasterizer):
             for i, j in itertools.product(range(n_windows_x), range(n_windows_y))
         ]
 
-    def select_representative_pixels_in_window(self, raster_data, window):
+    def select_representative_pixels_in_window(self, band, transform, window):
         """Select representative pixels within a single window."""
         unrasterizer = Unrasterizer(mask_width=self.mask_width, threshold=self.threshold)
-        return unrasterizer.select_representative_pixels(
-            raster_data=raster_data, window=window
+        pixels, values, coords = unrasterizer._select_representative_pixels_from_band(
+            band=band,
+            transform=transform,
+            window=window
         )
+        return pixels, values, coords
