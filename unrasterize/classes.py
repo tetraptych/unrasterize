@@ -122,9 +122,11 @@ class Unrasterizer(BaseUnrasterizer):
         self.mask = band > self.threshold
         sorted_pixels = self._sort_pixels(band)
 
-        for idx, pixel in enumerate(sorted_pixels):
-            if self.mask[tuple(pixel)]:
-                self._select_next_pixel(band, pixel, idx)
+        [
+            self._select_next_pixel(band, pixel, idx)
+            for idx, pixel in enumerate(sorted_pixels)
+            if self.mask[tuple(pixel)]
+        ]
 
         self.selected_values = self._reassign_pixel_values(
             band=band,
@@ -200,34 +202,27 @@ class WindowedUnrasterizer(BaseUnrasterizer):
 
         windows = self._get_windows(raster_data, window_shape)
 
-        for window in windows:
-            new_pixels, new_values, new_coordinates = self.select_representative_pixels_in_window(
-                raster_data=raster_data, window=window
-            )
-            self.selected_pixels.extend(new_pixels)
-            self.selected_values.extend(new_values)
-            self.selected_coords.extend(new_coordinates)
+        pixel_lists, value_lists, coord_lists = zip(*[
+            self.select_representative_pixels_in_window(raster_data=raster_data, window=window)
+            for window in windows
+        ])
 
-        return (
-            self.selected_pixels,
-            self.selected_values,
-            self.selected_coords
-        )
+        self.selected_pixels = [pixel for pixels in pixel_lists for pixel in pixels]
+        self.selected_values = [value for values in value_lists for value in values]
+        self.selected_coords = [coord for coords in coord_lists for coord in coords]
 
     def _get_windows(self, raster_data, window_shape):
         n_windows_x = math.ceil(raster_data.width / window_shape[0])
         n_windows_y = math.ceil(raster_data.height / window_shape[1])
-        windows = []
-        for i, j in itertools.product(range(n_windows_x), range(n_windows_y)):
-            windows.append(
-                rasterio.windows.Window(
-                    col_off=i * window_shape[0],
-                    row_off=j * window_shape[1],
-                    width=window_shape[0],
-                    height=window_shape[1]
-                )
+        return [
+            rasterio.windows.Window(
+                col_off=i * window_shape[0],
+                row_off=j * window_shape[1],
+                width=window_shape[0],
+                height=window_shape[1]
             )
-        return windows
+            for i, j in itertools.product(range(n_windows_x), range(n_windows_y))
+        ]
 
     def select_representative_pixels_in_window(self, raster_data, window):
         """Select representative pixels within a single window."""
