@@ -183,17 +183,19 @@ class Unrasterizer(BaseUnrasterizer):
 
 
 class WindowedUnrasterizer(BaseUnrasterizer):
-    """."""
+    """
+    An implementation of the BaseUnrasterizer interface that operates over small areas.
+
+    For large raster files, this class is much more memory efficient than the default Unrasterizer.
+    """
 
     def __init__(self, mask_width, threshold=1.0):
         """Inititalize a WindowedUnrasterizer."""
+        # TODO: Pass unrasterizer class as an argument, with settings determined by **kwargs.
         super().__init__()
         self.mask_width = mask_width
         self.mask = None
         self.threshold = threshold
-        self.selected_pixels = []
-        self.selected_values = []
-        self.selected_coords = []
 
     def select_representative_pixels(self, raster_data, window_shape=None):
         """Select representative pixels for the provided raster dataset."""
