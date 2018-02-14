@@ -6,4 +6,4 @@ The inspiration and original use case for this library is the 100m resolution po
 
 ## Sample output
 
-![30,000 representative points for Tanzania](https://farm5.staticflickr.com/4604/39273432645_ba8e69efba_z_d.jpg "30,000 representative points for Tanzania (sized by population)")
+![Representative points for France created using WorldPop raster data](https://farm5.staticflickr.com/4708/39370187915_693f694b79_z_d.jpg "Representative points for France created using WorldPop raster data")
