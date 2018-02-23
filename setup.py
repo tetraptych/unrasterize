@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name='unrasterize',
-    version='0.0.1',
+    version='0.1.0',
     description='A simple API for lossfully converting raster datasets to GeoJSON.',
     url='http://github.com/tetraptych/unrasterize',
     keywords=['geospatial', 'geo', 'raster', 'gdal'],
@@ -20,7 +20,9 @@ setuptools.setup(
     packages=['unrasterize'],
     install_requires=[
         'rasterio>=1.0a12',
-        'pathos>=0.2.1',
-        'numpy>=1.8.0'
+        'pathos>=0.2.0',
+        'numpy>=1.8.0',
+        'geojson>=1.3.0',
+        'geopandas>=0.2.0'
     ]
 )
