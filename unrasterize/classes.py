@@ -2,11 +2,17 @@
 import itertools
 import math
 
+import geojson
+
+import geopandas as gpd
+
 import numpy as np
 
 import pathos
 
 import rasterio
+
+import shapely
 
 
 class BaseUnrasterizer(object):
@@ -22,6 +28,33 @@ class BaseUnrasterizer(object):
     def select_representative_pixels(self, raster_data):
         """Select representative pixels for the provided raster dataset."""
         raise NotImplementedError
+
+    def to_geojson(self, value_attribute_name='value', **extra):
+        """Convert the selected points and values to GeoJSON."""
+        if self.selected_coords is None or len(self.selected_coords) == 0:
+            raise RuntimeError
+
+        return geojson.FeatureCollection(
+            features=[
+                geojson.Feature(
+                    id=id,
+                    geometry=shapely.geometry.Point(coord),
+                    properties={
+                        value_attribute_name: float(value)
+                    }
+                )
+                for id, (coord, value) in enumerate(zip(self.selected_coords, self.selected_values))
+            ],
+            **extra
+        )
+
+    def to_geopandas(self, value_attribute_name='value', **extra):
+        """Convert the selected points and values to a GeoDataFrame."""
+        feature_collection = self.to_geojson(value_attribute_name, **extra)
+        return gpd.GeoDataFrame.from_features(
+            features=feature_collection['features'],
+            crs=feature_collection.get('crs', None)
+        )
 
     @staticmethod
     def _sort_pixels(band):
