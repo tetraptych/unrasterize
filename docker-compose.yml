@@ -6,6 +6,7 @@ services:
           - ./unrasterize:/home/jovyan/work/unrasterize:ro
           - ./tests:/home/jovyan/work/tests:ro
           - ./data:/home/jovyan/work/data:rw
+          - ./examples:/home/jovyan/work/examples:rw
           - ./Makefile:/home/jovyan/work/Makefile:ro
           - ./.coveragerc:/home/jovyan/work/.coveragerc:ro
           - ./.flake8:/home/jovyan/work/.flake8:ro
