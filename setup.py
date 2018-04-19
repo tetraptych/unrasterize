@@ -1,10 +1,19 @@
 #!/usr/bin/env python
 import setuptools
 
+
+def _get_long_description():
+    with open('README.md', 'r') as f:
+        desc = f.read()
+    return desc
+
+
 setuptools.setup(
     name='unrasterize',
-    version='0.1.0',
+    version='0.1.1',
     description='A simple API for lossfully converting raster datasets to GeoJSON.',
+    long_description=_get_long_description(),
+    long_description_content_type='text/markdown',
     url='http://github.com/tetraptych/unrasterize',
     keywords=['geospatial', 'geo', 'raster', 'gdal'],
     classifiers=[
@@ -24,5 +33,6 @@ setuptools.setup(
         'numpy>=1.8.0',
         'geojson>=1.3.0',
         'geopandas>=0.2.0'
-    ]
+    ],
+    python_requires='>=3'
 )
