@@ -6,11 +6,11 @@ pathos==0.2.1
 PySAL==1.14.0
 rasterio==1.0a12
 rtree==0.8.3
-# Used by `make test` only:
+# Used by test suite / CI:
+coveralls==1.3.0
 mock==2.0.0
 pytest==3.0.6
 pytest-cov==2.4.0
-# Used by `make lint` only:
 flake8==3.3.0
 flake8-import-order==0.12
 flake8-quotes==0.11.0
