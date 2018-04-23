@@ -19,4 +19,4 @@ script:
   - make coverage
 
 after_success:
-  - coveralls
+  - coveralls data_file=data/.coverage

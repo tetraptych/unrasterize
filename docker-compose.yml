@@ -8,7 +8,6 @@ services:
           - ./data:/home/jovyan/work/data:rw
           - ./examples:/home/jovyan/work/examples:rw
           - ./Makefile:/home/jovyan/work/Makefile:ro
-          - ./.coverage:/home/jovyan/work/.coverage:rw
           - ./.coveragerc:/home/jovyan/work/.coveragerc:ro
           - ./.flake8:/home/jovyan/work/.flake8:ro
           - ./circle.yml:/home/jovyan/work/circle.yml:ro

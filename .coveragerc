@@ -1,4 +1,5 @@
 [run]
+data_file = /home/jovyan/work/data/.coverage
 omit =
     */tests/*
     */__init__.py
