@@ -31,3 +31,5 @@ data/private/*
 **/.terraform/
 **/*.tfstate*
 
+# .coverage file
+data/.coverage
