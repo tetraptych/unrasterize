@@ -11,7 +11,7 @@ coverage:
 	# touch data/.coverage
 	# sudo chmod 777 data/.coverage
 	# ls -lash data/.coverage
-	sudo docker-compose run --no-deps unrasterize pytest --cov=unrasterize --cov-config .coveragerc --cov-fail-under=90 --cov-report term-missing
+	docker-compose run --no-deps unrasterize pytest --cov=unrasterize --cov-config .coveragerc --cov-fail-under=90 --cov-report term-missing
 
 # [Dummy dependency to force a make command to always run.]
 FORCE:
