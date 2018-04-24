@@ -16,6 +16,3 @@ install: true
 script:
   - make lint
   - make coverage
-
-after_success:
-  - coveralls

@@ -1,4 +1,4 @@
-# Unrasterize [![PyPI version](https://badge.fury.io/py/unrasterize.svg)](https://badge.fury.io/py/unrasterize) [![Build Status](https://travis-ci.org/tetraptych/unrasterize.svg?branch=master)](https://travis-ci.org/tetraptych/unrasterize) [![Coverage Status](https://coveralls.io/repos/github/tetraptych/unrasterize/badge.svg?branch=master)](https://coveralls.io/github/tetraptych/unrasterize?branch=master) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+# Unrasterize [![PyPI version](https://badge.fury.io/py/unrasterize.svg)](https://badge.fury.io/py/unrasterize) [![Build Status](https://travis-ci.org/tetraptych/unrasterize.svg?branch=master)](https://travis-ci.org/tetraptych/unrasterize) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Unrasterize is a Python library for converting raster datasets into GeoJSON objects by selecting representative points based on their pixel values. The conversion process results in less granular data with dramatically reduced file sizes for use in other applications that accept GeoJSON inputs.
 
