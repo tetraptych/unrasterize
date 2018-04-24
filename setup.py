@@ -8,9 +8,20 @@ def _get_long_description():
     return desc
 
 
+def _get_version():
+    with open('unrasterize/__init__.py') as f:
+        for line in f:
+            if line.find("__version__") >= 0:
+                version = line.split("=")[1].strip()
+                version = version.strip('"')
+                version = version.strip("'")
+                continue
+    return version
+
+
 setuptools.setup(
     name='unrasterize',
-    version='0.1.1',
+    version=_get_version(),
     description='A simple API for lossfully converting raster datasets to GeoJSON.',
     long_description=_get_long_description(),
     long_description_content_type='text/markdown',
