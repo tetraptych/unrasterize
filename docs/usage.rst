@@ -22,7 +22,7 @@ The ``Unrasterizer`` class performs this selection process on the entire raster 
 Demonstration
 -------------
 
-..  image:: https://github.com/tetraptych/unrasterize/blob/master/docs/img/unrasterizer.gif
+..  image:: https://github.com/tetraptych/unrasterize/blob/master/docs/img/unrasterizer.gif?raw=true
 
 Here, the initial red triangle in the west represents pixels that fall below the threshold.
 
