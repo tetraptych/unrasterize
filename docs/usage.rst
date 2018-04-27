@@ -6,7 +6,7 @@ Algorithm walkthrough
 
 Let's walk through the algorithm behind the default ``Unrasterizer`` class. The basic use pattern is as follows: ::
 
-    u = Unrasterizer(mask_width=3, threshold=0.5)
+    u = Unrasterizer(mask_width=4, threshold=0.5)
     representative_points = u.select_representative_pixels(raster_data)
 
 ``mask_width`` indicates minimum number of non-selected pixels between adjacent selected pixels.
@@ -24,13 +24,13 @@ Demonstration
 
 ..  image:: https://github.com/tetraptych/unrasterize/blob/master/docs/img/unrasterizer.gif?raw=true
 
-Here, the initial red triangle in the west represents pixels that fall below the threshold.
+Here, the initial red triangle in the west represents pixels that fall below the population threshold. This could represent an uninhabited geographical feature, like a mountainside or part of a like.
 
-The purple point indicates the point with the highest value. It is chosen first.
+The initial purple pixel indicates the pixel with the highest value. It is chosen first.
 
-Then, all points within a square of radius ``mask_width`` are added to the mask (moving from turquoise to orange to red). These points will never be selected going forward.
+All points within a square of radius ``mask_width`` of the chosen pixel are added to the mask (moving from turquoise to orange to red). These points will never be selected going forward.
 
-Next, the remaining (turquoise) point with the highest value is selected and the pixels around it are masked.
+Next, the remaining (turquoise) pixel with the highest value is selected and the pixels around it are masked. This process repeats ad infinitum.
 
 Examples
 --------
