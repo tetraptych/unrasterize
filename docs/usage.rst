@@ -15,7 +15,7 @@ Let's walk through the algorithm behind the default ``Unrasterizer`` class. The 
 
 First, all pixels with value below the given threshold will be ignored. The remaining pixels are sorted according to their values and considered for selection one by one.
 
-After each point is selected, all points within a square of radius ``mask_width`` around the newly chosen point are masked and removed from further consideration. This process continues until every point is either selected or part of the mask.
+After each point is selected, all points within a circle of radius ``mask_width`` in the :math:`L^\infty` norm (i.e., a square in the standard Euclidean norm) of the newly chosen point are masked and removed from further consideration. This process continues until every point is either selected or part of the mask.
 
 The ``Unrasterizer`` class performs this selection process on the entire raster file, while the ``WindowedUnrasterizer`` applies the same process across each individual raster block and combines the results into a single array of selected pixels.
 
