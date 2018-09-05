@@ -24,7 +24,7 @@ Demonstration
 
 ..  image:: https://github.com/tetraptych/unrasterize/blob/master/docs/img/unrasterizer.gif?raw=true
 
-Here, the initial red triangle in the west represents pixels that fall below the population threshold. This could represent an uninhabited geographical feature, like a mountainside or part of a like.
+Here, the initial red triangle in the west represents pixels that fall below the population threshold. This could represent an uninhabited geographical feature, like a mountainside or part of a lake.
 
 The initial purple pixel indicates the pixel with the highest value. It is chosen first.
 
