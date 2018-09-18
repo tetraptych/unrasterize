@@ -8,6 +8,8 @@ The inspiration and original use case for this library is the 100m resolution po
 
 `unrasterize` is available on [PyPI](https://pypi.python.org/pypi/unrasterize) and can be installed via the command `pip install unrasterize`.
 
+Currently Python versions 3.3 and above are supported.
+
 `rasterio`, a depedency of `unrasterize`, may require the installation of additional GIS-specific tools outside of `pip`. Refer to the [Dockerfile](Dockerfile) for a list of these tools and how to install them.
 
 ## Sample output
