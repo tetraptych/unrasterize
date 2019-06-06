@@ -19,10 +19,11 @@ RUN apt-get -qq install \
     python-gdal \
     --fix-missing \
     > /dev/null
-USER jovyan
 
 WORKDIR /home/jovyan/work
 RUN cd /home/jovyan/work
 
 COPY requirements.txt .
 RUN pip -q install -r requirements.txt
+
+USER jovyan
