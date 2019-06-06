@@ -4,6 +4,10 @@ Unrasterize is a Python library for converting raster datasets into GeoJSON obje
 
 The inspiration and original use case for this library is the 100m resolution population data provided by [WorldPop](http://www.worldpop.org.uk/). This is also the source of the files in the `data` directory used by the unit tests.
 
+## Documentation
+
+Documentation is available at [unrasterize.readthedocs.io](https://unrasterize.readthedocs.io).
+
 ## Installation
 
 `unrasterize` is available on [PyPI](https://pypi.python.org/pypi/unrasterize) and can be installed via the command `pip install unrasterize`.
