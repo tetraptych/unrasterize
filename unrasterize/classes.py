@@ -3,16 +3,12 @@ import itertools
 import math
 
 import geojson
+import pathos
+import rasterio
+import shapely
 
 import geopandas as gpd
-
 import numpy as np
-
-import pathos
-
-import rasterio
-
-import shapely
 
 
 class BaseUnrasterizer(object):
@@ -270,7 +266,7 @@ class Unrasterizer(BaseUnrasterizer):
     """
 
     def __init__(self, mask_width, threshold=1.0):
-        """Inititalize an Unrasterizer."""
+        """Initialize an Unrasterizer."""
         super().__init__()
         self.mask_width = mask_width
         self.mask = None
@@ -421,7 +417,7 @@ class WindowedUnrasterizer(BaseUnrasterizer):
     """
 
     def __init__(self, mask_width, threshold=1.0):
-        """Inititalize a WindowedUnrasterizer."""
+        """Initialize a WindowedUnrasterizer."""
         # TODO: Pass unrasterizer class as an argument, with settings determined by **kwargs.
         super().__init__()
         self.mask_width = mask_width
