@@ -11,6 +11,5 @@ mock==2.0.0
 pytest==3.0.6
 pytest-cov==2.4.0
 flake8==3.3.0
-flake8-import-order==0.12
 flake8-quotes==0.11.0
 pep257==0.7.0
