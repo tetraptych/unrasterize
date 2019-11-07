@@ -126,7 +126,7 @@ class BaseUnrasterizer(object):
         )
 
     @staticmethod
-    def _reassign_pixel_values(threshold, band, pixels, raw_pixel_values=[]):
+    def _reassign_pixel_values(band, pixels, raw_pixel_values=[]):
         """Adjust values of selected pixels so that their sum is preserved.
 
         Parameters
@@ -147,12 +147,11 @@ class BaseUnrasterizer(object):
         if not raw_pixel_values:
             raw_pixel_values = [band[tuple(pixel)] for pixel in pixels]
         # Avoid underflow by ignoring values below the threshold.
-        total = np.sum(band[band > threshold], dtype=np.float32)
+        total = np.sum(band[band != 0], dtype=np.float32)
         total_selected = np.sum(raw_pixel_values, dtype=np.float32)
-        out = [
+        return [
             val * total / total_selected for val in raw_pixel_values
         ]
-        return out
 
     @staticmethod
     def _get_coordinates(transform, pixels, row_offset=0, col_offset=0):
@@ -510,6 +509,7 @@ class WindowedUnrasterizer(BaseUnrasterizer):
             A window from which to select the pixels.
             Used to keep track of row and column offsets.
         """
+        band[band <= self.threshold] = 0
         unrasterizer = Unrasterizer(mask_width=self.mask_width, threshold=self.threshold)
         pixels, values, coords = unrasterizer._select_representative_pixels_from_band(
             band=band,
