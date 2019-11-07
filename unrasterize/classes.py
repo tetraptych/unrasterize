@@ -331,7 +331,6 @@ class Unrasterizer(BaseUnrasterizer):
                 self._select_next_pixel(band, pixel, idx)
 
         self.selected_values = self._reassign_pixel_values(
-            threshold=self.threshold,
             band=band,
             pixels=self.selected_pixels,
             raw_pixel_values=self._raw_pixel_values
