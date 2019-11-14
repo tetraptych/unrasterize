@@ -13,6 +13,8 @@ Let's walk through the algorithm behind the default ``Unrasterizer`` class. The 
 
 ``threshold`` indicates the minimum value required for a pixel to be selected. Measured in the same units as value (often population per pixel).
 
+``agg`` indicates how the original pixel values from the raster should be aggregated. It can be either ``sum`` or ``average``. In the case of something like population, we would want to ``sum`` to preserve the original total population. With rainfall data, however, we might seek to obtain the ``average`` for a given area.
+
 First, all pixels with value below the given threshold will be ignored. The remaining pixels are sorted according to their values and considered for selection one by one.
 
 After each point is selected, all points within a circle of radius ``mask_width`` in the :math:`L^\infty` norm (i.e., a square in the standard Euclidean norm) of the newly chosen point are masked and removed from further consideration. This process continues until every point is either selected or part of the mask.
