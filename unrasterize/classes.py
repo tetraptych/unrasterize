@@ -233,7 +233,6 @@ class NaiveUnrasterizer(BaseUnrasterizer):
         self.selected_pixels = sorted_pixels[self._selected_indexes]
         self.selected_values = self._reassign_pixel_values(
             band=band,
-            agg=self.agg,
             pixels=self.selected_pixels
         )
         self.selected_coords = self._get_coordinates(
