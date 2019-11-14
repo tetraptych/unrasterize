@@ -136,7 +136,7 @@ class BaseUnrasterizer(object):
         pixels : array-like
             Iterable of selected pixels (as a list of tuples or two-element arrays).
         agg : string
-            The aggregation type. One of {'sum', 'average'}            
+            The aggregation type. One of {'sum', 'average'}
         raw_pixel_values : list, optional
             The values corresponding to ``pixels`` before adjustment.
             The values are inferred from ``band`` if missing.
@@ -257,7 +257,7 @@ class Unrasterizer(BaseUnrasterizer):
     threshold : float
         The minimum value required for a pixel to be selected.
     agg : string
-        The aggregation type. One of {'sum', 'average'}        
+        The aggregation type. One of {'sum', 'average'}
 
     Attributes
     ----------
