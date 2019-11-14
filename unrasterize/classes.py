@@ -119,14 +119,14 @@ class BaseUnrasterizer(object):
         """
         return np.stack(
             np.unravel_index(
-                indices=np.argsort(np.ravel(band))[::-1],
+                indices=np.argsort(np.ravel(np.abs(band)))[::-1],
                 dims=band.shape
             ),
             axis=-1
         )
 
     @staticmethod
-    def _reassign_pixel_values(band, pixels, raw_pixel_values=[]):
+    def _reassign_pixel_values(band, pixels, agg='sum', raw_pixel_values=[]):
         """Adjust values of selected pixels so that their sum is preserved.
 
         Parameters
@@ -135,6 +135,8 @@ class BaseUnrasterizer(object):
             Raster band in array format.
         pixels : array-like
             Iterable of selected pixels (as a list of tuples or two-element arrays).
+        agg : string
+            The aggregation type. One of {'sum', 'average'}            
         raw_pixel_values : list, optional
             The values corresponding to ``pixels`` before adjustment.
             The values are inferred from ``band`` if missing.
@@ -147,8 +149,12 @@ class BaseUnrasterizer(object):
         if not raw_pixel_values:
             raw_pixel_values = [band[tuple(pixel)] for pixel in pixels]
         # Avoid underflow by ignoring values below the threshold.
-        total = np.sum(band[band != 0], dtype=np.float32)
-        total_selected = np.sum(raw_pixel_values, dtype=np.float32)
+        if agg == 'average':
+            total = np.mean(band[band != 0], dtype=np.float32)
+            total_selected = np.mean(raw_pixel_values, dtype=np.float32)
+        else:
+            total = np.sum(band[band != 0], dtype=np.float32)
+            total_selected = np.sum(raw_pixel_values, dtype=np.float32)
         return [
             val * total / total_selected for val in raw_pixel_values
         ]
@@ -227,6 +233,7 @@ class NaiveUnrasterizer(BaseUnrasterizer):
         self.selected_pixels = sorted_pixels[self._selected_indexes]
         self.selected_values = self._reassign_pixel_values(
             band=band,
+            agg=self.agg,
             pixels=self.selected_pixels
         )
         self.selected_coords = self._get_coordinates(
@@ -250,6 +257,8 @@ class Unrasterizer(BaseUnrasterizer):
         The minimum number of non-selected pixels between adjacent selected pixels.
     threshold : float
         The minimum value required for a pixel to be selected.
+    agg : string
+        The aggregation type. One of {'sum', 'average'}        
 
     Attributes
     ----------
@@ -265,12 +274,13 @@ class Unrasterizer(BaseUnrasterizer):
         Coordinates of selected pixels.
     """
 
-    def __init__(self, mask_width, threshold=1.0):
+    def __init__(self, mask_width, threshold=1.0, agg='sum'):
         """Initialize an Unrasterizer."""
         super().__init__()
         self.mask_width = mask_width
         self.mask = None
         self.threshold = threshold
+        self.agg = agg
         self._raw_pixel_values = []
 
     def select_representative_pixels(self, raster_data, window=None):
@@ -332,6 +342,7 @@ class Unrasterizer(BaseUnrasterizer):
 
         self.selected_values = self._reassign_pixel_values(
             band=band,
+            agg=self.agg,
             pixels=self.selected_pixels,
             raw_pixel_values=self._raw_pixel_values
         )
@@ -366,7 +377,7 @@ class Unrasterizer(BaseUnrasterizer):
         window = band[row_slice, col_slice]
         self._raw_pixel_values.append(
             np.sum(
-                window[window > self.threshold],
+                window[window != 0.0],
                 dtype=np.float32
             )
         )
@@ -401,6 +412,8 @@ class WindowedUnrasterizer(BaseUnrasterizer):
         The minimum number of non-selected pixels between adjacent selected pixels.
     threshold : float
         The minimum value required for a pixel to be selected.
+    agg : string
+        The aggregation type. One of {'sum', 'average'}
 
     Attributes
     ----------
@@ -416,13 +429,14 @@ class WindowedUnrasterizer(BaseUnrasterizer):
         Coordinates of selected pixels.
     """
 
-    def __init__(self, mask_width, threshold=1.0):
+    def __init__(self, mask_width, threshold=1.0, agg='sum'):
         """Initialize a WindowedUnrasterizer."""
         # TODO: Pass unrasterizer class as an argument, with settings determined by **kwargs.
         super().__init__()
         self.mask_width = mask_width
         self.mask = None
         self.threshold = threshold
+        self.agg = agg
 
     def select_representative_pixels(self, raster_data, window_shape=None, n_jobs=-1):
         """Select representative pixels for the provided raster dataset.
@@ -509,7 +523,9 @@ class WindowedUnrasterizer(BaseUnrasterizer):
             Used to keep track of row and column offsets.
         """
         band[band <= self.threshold] = 0
-        unrasterizer = Unrasterizer(mask_width=self.mask_width, threshold=self.threshold)
+        unrasterizer = Unrasterizer(mask_width=self.mask_width,
+                                    threshold=self.threshold,
+                                    agg=self.agg)
         pixels, values, coords = unrasterizer._select_representative_pixels_from_band(
             band=band,
             transform=transform,
